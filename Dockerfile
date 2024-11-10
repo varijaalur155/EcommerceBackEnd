@@ -8,7 +8,7 @@ WORKDIR /app
 VOLUME /tmp
 
 # Copy the JAR file to the container
-ARG JAR_FILE=target/Ecommerce-multi-vendor-0.0.1-SNAPSHOT.jar.original
+ARG JAR_FILE=target/Ecommerce-multi-vendor-0.0.1-SNAPSHOT.jar
 COPY ${JAR_FILE} app.jar
 
 # Expose port 8080 (or your configured port)

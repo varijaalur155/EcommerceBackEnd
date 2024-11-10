@@ -1,18 +1,29 @@
-# Use the official OpenJDK 17 image as a base
+# Use Maven image to build the JAR file
 FROM maven:3.8.4-openjdk-17 AS build
 
-# Set the working directory inside the container
+# Set the working directory
 WORKDIR /app
 
-# Add a volume to store logs
-VOLUME /tmp
+# Copy the project files
+COPY . .
 
-# Copy the JAR file to the container
-ARG JAR_FILE=target/Ecommerce-multi-vendor-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
+# Build the project and create the JAR file
+RUN mvn clean package -DskipTests
 
-# Expose port 8080 (or your configured port)
+# Use OpenJDK image to run the app
+FROM openjdk:17-jdk
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the JAR file from the build stage
+COPY --from=build /app/target/Ecommerce-multi-vendor-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose port 8080
 EXPOSE 8080
+
+# Run the Spring Boot app
+ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # Run the Spring Boot app
 ENTRYPOINT ["java", "-jar", "app.jar"]

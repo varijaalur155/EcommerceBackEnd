@@ -20,7 +20,6 @@ public class WebConfig {
                         .allowedOrigins("*") // Replace with your Vercel frontend URL
                         .allowedMethods("GET", "POST", "PUT", "DELETE") // Add more methods if needed
                         .allowedHeaders("*");// Allow all headers, or specify if you need only certain headers
-                        .allowCredentials(true);
             }
         };
     }

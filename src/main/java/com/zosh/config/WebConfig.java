@@ -17,12 +17,13 @@ public class WebConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 // Allow all paths (/**) to handle cross-origin requests
                 registry.addMapping("/**")
-                        .allowedOrigins("*") // Replace with your Vercel frontend URL
+                        .allowedOrigins("https://varijashoppingstore.vercel.app") // Replace with your Vercel frontend URL
                         .allowedMethods("GET", "POST", "PUT", "DELETE") // Add more methods if needed
-                        .allowedHeaders("*");// Allow all headers, or specify if you need only certain headers
-                        .allowCredentials(true)
-                        .maxAge(3600);
+                        .allowedHeaders("*") // Allow all headers, or specify if you need only certain headers
+                        .allowCredentials(true) // Allow cookies and credentials for cross-origin requests
+                        .maxAge(3600); // Cache the CORS response for 1 hour to reduce preflight requests
             }
         };
     }
 }
+

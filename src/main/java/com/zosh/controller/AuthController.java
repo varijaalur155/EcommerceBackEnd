@@ -37,15 +37,18 @@ public class AuthController {
 
 
     @PostMapping("/sent/login-signup-otp")
-    public ResponseEntity<ApiResponse> sentLoginOtp(
-            @RequestBody VerificationCode req) throws MessagingException, UserException {
+public ResponseEntity<ApiResponse> sentLoginOtp(
+        @RequestBody VerificationCode req
+) throws UserException {
 
-        authService.sentLoginOtp(req.getEmail());
+    authService.sentLoginOtp(req.getEmail());
 
-        ApiResponse res = new ApiResponse();
-        res.setMessage("otp sent");
-        return new ResponseEntity<>(res, HttpStatus.CREATED);
-    }
+    ApiResponse res = new ApiResponse();
+    res.setMessage("otp sent");
+
+    return new ResponseEntity<>(res, HttpStatus.CREATED);
+}
+
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> createUserHandler(

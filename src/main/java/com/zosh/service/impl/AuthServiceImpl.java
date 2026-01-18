@@ -20,7 +20,6 @@ import com.zosh.service.AuthService;
 import com.zosh.service.EmailService;
 import com.zosh.service.UserService;
 import com.zosh.utils.OtpUtils;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -52,35 +51,40 @@ public class AuthServiceImpl implements AuthService {
     private final CartRepository cartRepository;
 
 
-    @Override
-    public void sentLoginOtp(String email) throws UserException, MessagingException {
+   @Override
+public void sentLoginOtp(String email) throws UserException {
 
+    String SIGNING_PREFIX = "signing_";
 
-        String SIGNING_PREFIX = "signing_";
-
-        if (email.startsWith(SIGNING_PREFIX)) {
-            email = email.substring(SIGNING_PREFIX.length());
-            userService.findUserByEmail(email);
-        }
-
-        VerificationCode isExist = verificationCodeRepository
-                .findByEmail(email);
-
-        if (isExist != null) {
-            verificationCodeRepository.delete(isExist);
-        }
-
-        String otp = OtpUtils.generateOTP();
-
-        VerificationCode verificationCode = new VerificationCode();
-        verificationCode.setOtp(otp);
-        verificationCode.setEmail(email);
-        verificationCodeRepository.save(verificationCode);
-
-        String subject = "Zosh Bazaar Login/Signup Otp";
-        String text = "your login otp is - ";
-        emailService.sendVerificationOtpEmail(email, otp, subject, text);
+    if (email.startsWith(SIGNING_PREFIX)) {
+        email = email.substring(SIGNING_PREFIX.length());
+        userService.findUserByEmail(email);
     }
+
+    VerificationCode isExist =
+            verificationCodeRepository.findByEmail(email);
+
+    if (isExist != null) {
+        verificationCodeRepository.delete(isExist);
+    }
+
+    String otp = OtpUtils.generateOTP();
+
+    VerificationCode verificationCode = new VerificationCode();
+    verificationCode.setOtp(otp);
+    verificationCode.setEmail(email);
+    verificationCodeRepository.save(verificationCode);
+
+    String subject = "Zosh Bazaar Login/Signup OTP";
+    String text = "Your login OTP is - ";
+
+    emailService.sendVerificationOtpEmail(
+            email,
+            otp,
+            subject,
+            text
+    );
+}
 
     @Override
     public String createUser(SignupRequest req) throws SellerException {

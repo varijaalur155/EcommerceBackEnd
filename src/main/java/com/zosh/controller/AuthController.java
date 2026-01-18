@@ -9,7 +9,6 @@ import com.zosh.repository.VerificationCodeRepository;
 import com.zosh.request.ResetPasswordRequest;
 import com.zosh.request.SignupRequest;
 import com.zosh.service.AuthService;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

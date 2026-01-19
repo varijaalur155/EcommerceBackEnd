@@ -1,6 +1,6 @@
 package com.zosh.config;
+package com.zosh.config;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -26,34 +26,49 @@ public class AppConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(Authorize -> Authorize
-//                		.requestMatchers("/api/admin/**").hasAnyRole("SHOP_OWNER","ADMIN")
-                                .requestMatchers("/api/**").authenticated()
-                                .requestMatchers("/api/products/*/reviews").permitAll()
-                                .anyRequest().permitAll()
-                )
-                .addFilterBefore(new JwtTokenValidator(), BasicAuthenticationFilter.class)
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
-               
-		
-		return http.build();
-		
-	}
-	
-    // CORS Configuration
+        http
+            .sessionManagement(
+                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(auth -> auth
+                // ✅ PUBLIC ENDPOINTS (NO JWT)
+                .requestMatchers(
+                        "/auth/**",
+                        "/sellers/**",
+                        "/login",
+                        "/register"
+                ).permitAll()
+
+                // 🔒 PROTECTED API
+                .requestMatchers("/api/**").authenticated()
+
+                // everything else
+                .anyRequest().permitAll()
+            )
+            .addFilterBefore(
+                new JwtTokenValidator(),
+                BasicAuthenticationFilter.class
+            )
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        return http.build();
+    }
+
+    // ✅ CORS
     private CorsConfigurationSource corsConfigurationSource() {
         return new CorsConfigurationSource() {
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration cfg = new CorsConfiguration();
-                cfg.setAllowedOrigins(Arrays.asList("https://varijashoppingstore.vercel.app",
-                        "http://localhost:3000"));
+                cfg.setAllowedOrigins(Arrays.asList(
+                        "https://varijashoppingstore.vercel.app",
+                        "http://localhost:3000"
+                ));
                 cfg.setAllowedMethods(Collections.singletonList("*"));
-                cfg.setAllowCredentials(true);
                 cfg.setAllowedHeaders(Collections.singletonList("*"));
                 cfg.setExposedHeaders(Arrays.asList("Authorization"));
+                cfg.setAllowCredentials(true);
                 cfg.setMaxAge(3600L);
                 return cfg;
             }
@@ -62,8 +77,8 @@ public class AppConfig {
 
     @Bean
     PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public RestTemplate restTemplate() {

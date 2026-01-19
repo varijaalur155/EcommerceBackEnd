@@ -24,6 +24,17 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class JwtTokenValidator extends OncePerRequestFilter {
 
+    // ✅ CRITICAL: skip JWT validation for auth / OTP APIs
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        return path.startsWith("/auth/")
+                || path.startsWith("/sellers/")
+                || path.startsWith("/login")
+                || path.startsWith("/register");
+    }
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -33,7 +44,7 @@ public class JwtTokenValidator extends OncePerRequestFilter {
 
         String authHeader = request.getHeader(JwtConstant.JWT_HEADER);
 
-        // ✅ VERY IMPORTANT: allow requests without JWT
+        // No token → just continue
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -42,7 +53,8 @@ public class JwtTokenValidator extends OncePerRequestFilter {
         String jwt = authHeader.substring(7);
 
         try {
-            SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+            SecretKey key =
+                    Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
 
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
@@ -62,7 +74,7 @@ public class JwtTokenValidator extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
-            throw new BadCredentialsException("invalid token...");
+            throw new BadCredentialsException("Invalid or expired JWT token");
         }
 
         filterChain.doFilter(request, response);

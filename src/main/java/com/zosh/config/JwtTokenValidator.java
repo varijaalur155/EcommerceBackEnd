@@ -36,47 +36,55 @@ public class JwtTokenValidator extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+) throws ServletException, IOException {
 
-        String authHeader = request.getHeader(JwtConstant.JWT_HEADER);
+    String path = request.getRequestURI();
 
-        // No token → just continue
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+    // ✅ VERY IMPORTANT: skip JWT validation for auth endpoints
+    if (path.startsWith("/auth")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
 
+    String authHeader = request.getHeader(JwtConstant.JWT_HEADER);
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    try {
         String jwt = authHeader.substring(7);
 
-        try {
-            SecretKey key =
-                    Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+        SecretKey key =
+                Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
 
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(jwt)
-                    .getBody();
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(jwt)
+                .getBody();
 
-            String email = claims.get("email", String.class);
-            String authorities = claims.get("authorities", String.class);
+        String email = claims.get("email", String.class);
+        String authorities = claims.get("authorities", String.class);
 
-            List<GrantedAuthority> auths =
-                    AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
+        List<GrantedAuthority> auths =
+                AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
 
-            Authentication authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, auths);
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(email, null, auths);
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        } catch (Exception e) {
-            throw new BadCredentialsException("Invalid or expired JWT token");
-        }
-
-        filterChain.doFilter(request, response);
+    } catch (Exception e) {
+        // ✅ DO NOT throw exception here
+        SecurityContextHolder.clearContext();
     }
+
+    filterChain.doFilter(request, response);
+}
 }

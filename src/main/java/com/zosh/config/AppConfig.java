@@ -16,8 +16,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 @Configuration
 @EnableWebSecurity
 public class AppConfig {
@@ -26,11 +24,14 @@ public class AppConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .sessionManagement(
-                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            // ✅ STATELESS JWT
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
+
+            // ✅ AUTHORIZATION RULES
             .authorizeHttpRequests(auth -> auth
-                // ✅ PUBLIC ENDPOINTS (NO JWT)
+                // PUBLIC (NO JWT)
                 .requestMatchers(
                         "/auth/**",
                         "/sellers/**",
@@ -38,21 +39,32 @@ public class AppConfig {
                         "/register"
                 ).permitAll()
 
-                // 🔒 PROTECTED API
+                // PROTECTED
                 .requestMatchers("/api/**").authenticated()
 
                 .anyRequest().permitAll()
             )
-            .addFilterBefore(
-                new JwtTokenValidator(),
-                BasicAuthenticationFilter.class
-            )
+
+            // ✅ JWT FILTER (SAFE)
+            .addFilterBefore(jwtTokenValidator(), BasicAuthenticationFilter.class)
+
+            // ✅ SECURITY BASICS
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
         return http.build();
     }
 
+    /**
+     * ✅ Register JWT filter as a bean
+     * Allows Spring to manage lifecycle
+     */
+    @Bean
+    public JwtTokenValidator jwtTokenValidator() {
+        return new JwtTokenValidator();
+    }
+
+    // ✅ CORS
     private CorsConfigurationSource corsConfigurationSource() {
         return request -> {
             CorsConfiguration cfg = new CorsConfiguration();
@@ -69,11 +81,13 @@ public class AppConfig {
         };
     }
 
+    // ✅ PASSWORD ENCODER
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // ✅ REST TEMPLATE (BREVO)
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();

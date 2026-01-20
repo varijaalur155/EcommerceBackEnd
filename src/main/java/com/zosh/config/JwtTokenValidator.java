@@ -45,10 +45,10 @@ protected void doFilterInternal(
     String path = request.getRequestURI();
 
     // ✅ VERY IMPORTANT: skip JWT validation for auth endpoints
-    if (path.startsWith("/auth")) {
-        filterChain.doFilter(request, response);
-        return;
-    }
+    if (request.getRequestURI().startsWith("/auth")) {
+    filterChain.doFilter(request, response);
+    return;
+}
 
     String authHeader = request.getHeader(JwtConstant.JWT_HEADER);
 

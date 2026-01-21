@@ -5,15 +5,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
 @Service
 public class EmailService {
+    private static final Logger log =
+        LoggerFactory.getLogger(EmailService.class);
 
-    @Value("${brevo.api.key}")
+   @Value("${brevo.api.key}")
     private String apiKey;
 
     @Value("${brevo.sender.email}")

@@ -54,6 +54,8 @@ public class AuthServiceImpl implements AuthService {
    @Override
 public void sentLoginOtp(String email) throws UserException {
 
+    log.info("➡️ OTP request received for email: {}", email);
+
     String SIGNING_PREFIX = "signing_";
 
     if (email.startsWith(SIGNING_PREFIX)) {
@@ -61,30 +63,34 @@ public void sentLoginOtp(String email) throws UserException {
         userService.findUserByEmail(email);
     }
 
-    VerificationCode isExist =
+    VerificationCode existing =
             verificationCodeRepository.findByEmail(email);
 
-    if (isExist != null) {
-        verificationCodeRepository.delete(isExist);
+    if (existing != null) {
+        log.info("🧹 Deleting old OTP for {}", email);
+        verificationCodeRepository.delete(existing);
     }
 
     String otp = OtpUtils.generateOTP();
+    log.info("🔐 Generated OTP: {}", otp);
 
     VerificationCode verificationCode = new VerificationCode();
     verificationCode.setOtp(otp);
     verificationCode.setEmail(email);
     verificationCodeRepository.save(verificationCode);
 
-    String subject = "Zosh Bazaar Login/Signup OTP";
-    String text = "Your login OTP is - ";
+    log.info("💾 OTP saved in DB for {}", email);
 
     emailService.sendVerificationOtpEmail(
             email,
             otp,
-            subject,
-            text
+            "Zosh Bazaar Login/Signup OTP",
+            "Your login OTP is - "
     );
+
+    log.info("✅ OTP email sent successfully to {}", email);
 }
+
 
     @Override
     public String createUser(SignupRequest req) throws SellerException {

@@ -1,5 +1,6 @@
 package com.zosh.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class EmailService {
 
@@ -20,7 +22,8 @@ public class EmailService {
     @Value("${brevo.sender.name}")
     private String senderName;
 
-    private static final String BREVO_URL = "https://api.brevo.com/v3/smtp/email";
+    private static final String BREVO_URL =
+            "https://api.brevo.com/v3/smtp/email";
 
     public void sendVerificationOtpEmail(
             String userEmail,
@@ -28,6 +31,14 @@ public class EmailService {
             String subject,
             String text
     ) {
+
+        log.info("➡️ Sending OTP email to {}", userEmail);
+        log.info("🔑 Brevo API key present: {}", apiKey != null);
+
+        if (apiKey == null || apiKey.isBlank()) {
+            log.error("❌ Brevo API key is missing");
+            throw new RuntimeException("Brevo API key not configured");
+        }
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -46,23 +57,30 @@ public class EmailService {
         body.put("sender", sender);
         body.put("to", new Object[]{to});
         body.put("subject", subject);
-        body.put(
-                "htmlContent",
-                "<p>Your login OTP is:</p><h2>" + otp + "</h2>"
-        );
+        body.put("htmlContent",
+                "<p>Your login OTP is:</p><h2>" + otp + "</h2>");
 
         HttpEntity<Map<String, Object>> request =
                 new HttpEntity<>(body, headers);
 
-        ResponseEntity<String> response =
-                restTemplate.postForEntity(
-                        BREVO_URL,
-                        request,
-                        String.class
-                );
+        try {
+            ResponseEntity<String> response =
+                    restTemplate.postForEntity(
+                            BREVO_URL,
+                            request,
+                            String.class
+                    );
 
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("Failed to send OTP via Brevo");
+            log.info("📬 Brevo response status: {}", response.getStatusCode());
+            log.info("📬 Brevo response body: {}", response.getBody());
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Brevo failed: " + response.getBody());
+            }
+
+        } catch (Exception e) {
+            log.error("❌ Error while sending OTP via Brevo", e);
+            throw new RuntimeException("Failed to send OTP email");
         }
     }
 }
